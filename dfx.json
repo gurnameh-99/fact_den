@@ -1,0 +1,26 @@
+{
+  "canisters": {
+    "fact_den_backend": {
+      "main": "src/fact_den_backend/main.mo",
+      "type": "motoko"
+    },
+    "fact_den_frontend": {
+      "dependencies": [
+        "fact_den_backend"
+      ],
+      "source": [
+        "src/fact_den_frontend/dist"
+      ],
+      "type": "assets",
+      "workspace": "fact_den_frontend"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
