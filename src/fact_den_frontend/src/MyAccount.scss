@@ -1,7 +1,7 @@
 // src/fact_den_frontend/src/MyAccount.scss
 
 .my-account {
-    max-width: 500px;
+    max-width: 800px;
     margin: 2rem auto;
     background: #fff;
     padding: 1.5rem;
@@ -11,6 +11,63 @@
     h2 {
       text-align: center;
       margin-bottom: 1rem;
+    }
+    
+    .icp-id {
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.9rem;
+      word-break: break-all;
+    }
+
+    .tabs {
+      display: flex;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid #ddd;
+      
+      .tab-btn {
+        padding: 0.75rem 1.5rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 500;
+        color: #666;
+        position: relative;
+        
+        &:hover {
+          color: #333;
+        }
+        
+        &.active {
+          color: #667eea;
+          font-weight: 600;
+          
+          &:after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background-color: #667eea;
+            border-radius: 3px 3px 0 0;
+          }
+        }
+      }
+    }
+    
+    .tab-content {
+      min-height: 300px;
+      
+      h3 {
+        margin-top: 0;
+        margin-bottom: 1.5rem;
+        color: #333;
+      }
     }
   
     .account-form {
@@ -35,10 +92,44 @@
   
       .avatar-preview {
         text-align: center;
-        img {
-          max-width: 150px;
+        margin: 1rem 0;
+        
+        svg {
+          color: #555;
+          background-color: #f5f5f5;
+          padding: 10px;
           border-radius: 50%;
-          margin-top: 0.5rem;
+          border: 2px solid #667eea;
+        }
+      }
+      
+      .icon-selector {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+        margin-top: 0.5rem;
+        
+        .icon-option {
+          cursor: pointer;
+          padding: 0.5rem;
+          border-radius: 6px;
+          background-color: #f5f5f5;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          transition: all 0.2s;
+          
+          &:hover {
+            background-color: #e0e0e0;
+            transform: scale(1.05);
+          }
+          
+          &.selected {
+            background-color: #667eea;
+            color: white;
+            transform: scale(1.1);
+          }
         }
       }
   
@@ -73,6 +164,93 @@
       border-radius: 4px;
       margin-bottom: 20px;
     }
+    
+    .loading {
+      display: flex;
+      justify-content: center;
+      padding: 2rem;
+      color: #666;
+      font-style: italic;
+    }
+    
+    .no-posts {
+      text-align: center;
+      color: #666;
+      font-style: italic;
+      padding: 2rem;
+    }
+    
+    .user-posts {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      
+      .user-post {
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 1rem;
+        background-color: #f9f9f9;
+        transition: transform 0.2s;
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .post-header {
+          display: flex;
+          flex-direction: column;
+          margin-bottom: 0.75rem;
+          
+          h4 {
+            margin: 0 0 0.5rem 0;
+            color: #333;
+          }
+          
+          .post-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: #666;
+            flex-wrap: wrap;
+            
+            .post-date, .post-votes {
+              display: flex;
+              align-items: center;
+            }
+            
+            .post-verdict {
+              display: flex;
+              align-items: center;
+              background-color: #f0f0f0;
+              padding: 2px 8px;
+              border-radius: 12px;
+              
+              .verdict-icon {
+                margin-right: 4px;
+              }
+              
+              .verdict-text {
+                font-weight: 600;
+              }
+            }
+          }
+        }
+        
+        .post-content {
+          margin: 0.5rem 0;
+          color: #444;
+        }
+        
+        .post-details {
+          display: flex;
+          justify-content: flex-end;
+          font-size: 0.85rem;
+          color: #667eea;
+        }
+      }
+    }
 
     .required {
       color: #d32f2f;
@@ -104,6 +282,60 @@
       color: #666;
       margin-top: 5px;
       font-style: italic;
+    }
+  }
+  
+  .my-posts-list {
+    margin-top: 1rem;
+    
+    .post-item {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        border-left: 3px solid #1976d2;
+      }
+      
+      .post-title {
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+        color: #1976d2;
+        font-size: 1.2rem;
+      }
+      
+      .post-content {
+        color: #555;
+        margin-bottom: 0.75rem;
+      }
+      
+      .post-metadata {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        color: #777;
+        
+        .post-stats {
+          flex: 1;
+        }
+        
+        .post-verdict {
+          display: flex;
+          align-items: center;
+          font-weight: 500;
+          
+          svg {
+            margin-right: 5px;
+          }
+        }
+      }
     }
   }
   

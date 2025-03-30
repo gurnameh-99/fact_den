@@ -1,9 +1,10 @@
 // src/fact_den_frontend/src/App.jsx
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import AppBar from './AppBar';
 import Dashboard from './Dashboard';
 import MyAccount from './MyAccount';
+import SignUp from './SignUp';
 import './App.scss';
 // Import backend services
 import { getUserInfo, getAuthClient } from './services/backend';
@@ -22,6 +23,8 @@ function App() {
     alias: '',
     avatar: ''
   });
+  // Track if the user is new (no alias) or existing
+  const [isNewUser, setIsNewUser] = useState(false);
 
   // Initialize authentication
   useEffect(() => {
@@ -42,14 +45,32 @@ function App() {
           try {
             // Fetch user info from backend if authenticated
             const userInfo = await getUserInfo();
-            if (userInfo) {
+            if (userInfo && userInfo.alias) { // Make sure alias exists and is not empty
               setAccountInfo({
                 alias: userInfo.alias,
                 avatar: userInfo.avatar
               });
+              // User has an alias, so they're not new
+              setIsNewUser(false);
+              console.log("Init: User is recognized as existing user, will access dashboard");
+            } else {
+              // No user info or empty alias, they are a new user
+              setAccountInfo({
+                alias: '',
+                avatar: ''
+              });
+              setIsNewUser(true);
+              console.log("Init: User is recognized as new user, will be directed to signup");
             }
           } catch (error) {
             console.error("Error fetching user info:", error);
+            // Assume new user if error fetching info
+            setAccountInfo({
+              alias: '',
+              avatar: ''
+            });
+            setIsNewUser(true);
+            console.log("Init: Error fetching user info - assuming new user, will be directed to signup");
           }
         }
       } catch (error) {
@@ -87,27 +108,36 @@ function App() {
           setPrincipal(userPrincipal);
           
           try {
-            // Delay fetching user info slightly
-            setTimeout(async () => {
-              try {
-                // Fetch user info after successful login
-                console.log("Fetching user info after login");
-                const userInfo = await getUserInfo();
-                if (userInfo) {
-                  console.log("User info retrieved:", userInfo);
-                  setAccountInfo({
-                    alias: userInfo.alias || '',
-                    avatar: userInfo.avatar || ''
-                  });
-                } else {
-                  console.log("No existing user info found - new user");
-                }
-              } catch (infoError) {
-                console.error("Error fetching user info after delay:", infoError);
-              }
-            }, 500);
-          } catch (error) {
-            console.error("Error setting up delayed user info fetch:", error);
+            // Fetch user info immediately after login instead of using setTimeout
+            console.log("Fetching user info after login");
+            const userInfo = await getUserInfo();
+            if (userInfo && userInfo.alias) { // Make sure alias exists and is not empty
+              console.log("User info retrieved:", userInfo);
+              setAccountInfo({
+                alias: userInfo.alias || '',
+                avatar: userInfo.avatar || ''
+              });
+              setIsNewUser(false);
+              console.log("User is recognized as existing user, will redirect to dashboard");
+            } else {
+              console.log("No existing user info or empty alias - marking as new user");
+              setIsNewUser(true);
+              // Clear account info to ensure proper signup flow
+              setAccountInfo({
+                alias: '',
+                avatar: ''
+              });
+              console.log("User is recognized as new user, will redirect to signup");
+            }
+          } catch (infoError) {
+            console.error("Error fetching user info:", infoError);
+            setIsNewUser(true);
+            // Clear account info on error
+            setAccountInfo({
+              alias: '',
+              avatar: ''
+            });
+            console.log("Error fetching user info - marking as new user, will redirect to signup");
           }
         },
         onError: (error) => {
@@ -131,6 +161,7 @@ function App() {
         alias: '',
         avatar: ''
       });
+      setIsNewUser(false);
     } catch (error) {
       console.error("Logout error:", error);
     }
@@ -149,7 +180,14 @@ function App() {
   };
 
   const updateAccountInfo = (newInfo) => {
+    console.log("Updating account info:", newInfo);
     setAccountInfo(newInfo);
+    // When a user updates their account info, they are explicitly no longer a new user
+    setIsNewUser(false);
+    
+    // Dispatch an event to notify other components of the change
+    const authChangeEvent = new Event('authStateChanged');
+    window.dispatchEvent(authChangeEvent);
   };
 
   // Show loading indicator while authentication is in progress
@@ -178,45 +216,83 @@ function App() {
     );
   }
 
+  // App wrapper component with route awareness
+  function AppWithNav() {
+    const location = useLocation();
+    const isSignupPage = location.pathname === '/signup';
+    
+    return (
+      <>
+        {/* Only render AppBar if not on signup page */}
+        {!isSignupPage && (
+          <AppBar
+            principal={accountInfo.alias || "No Alias"}
+            onLogout={handleLogout}
+            searchValue={searchQuery}
+            onSearchChange={handleSearchChange}
+            onNewPostClick={handleNewPostClick}
+            accountInfo={accountInfo}
+          />
+        )}
+        <div className={`app-content ${isSignupPage ? 'full-height' : ''}`}>
+          <Routes>
+            <Route
+              path="/dashboard"
+              element={
+                // If new user (no alias), redirect to signup
+                isNewUser ? (
+                  <Navigate to="/signup" replace />
+                ) : (
+                  <Dashboard
+                    searchQuery={searchQuery}
+                    showNewPost={showNewPost}
+                    onCloseNewPost={handleCloseNewPost}
+                  />
+                )
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <MyAccount
+                  accountInfo={accountInfo}
+                  updateAccountInfo={updateAccountInfo}
+                  principal={principal}
+                />
+              }
+            />
+            <Route
+              path="/signup"
+              element={
+                // If existing user tries to access /signup, redirect to dashboard
+                !isNewUser ? (
+                  <Navigate to="/dashboard" replace />
+                ) : (
+                  <SignUp
+                    updateAccountInfo={updateAccountInfo}
+                    principal={principal}
+                  />
+                )
+              }
+            />
+            {/* Default route - redirect to dashboard or signup based on user status */}
+            <Route 
+              path="*" 
+              element={
+                isNewUser ? 
+                  <Navigate to="/signup" replace /> : 
+                  <Navigate to="/dashboard" replace />
+              } 
+            />
+          </Routes>
+        </div>
+      </>
+    );
+  }
+
   return (
     <Router>
-      <AppBar
-        principal={accountInfo.alias || "No Alias"}
-        onLogout={handleLogout}
-        searchValue={searchQuery}
-        onSearchChange={handleSearchChange}
-        onNewPostClick={handleNewPostClick}
-      />
-      <div className="app-content">
-        <Routes>
-          <Route
-            path="/dashboard"
-            element={
-              // If alias is empty, force user to update account info first.
-              accountInfo.alias ? (
-                <Dashboard
-                  searchQuery={searchQuery}
-                  showNewPost={showNewPost}
-                  onCloseNewPost={handleCloseNewPost}
-                />
-              ) : (
-                <Navigate to="/account" replace />
-              )
-            }
-          />
-          <Route
-            path="/account"
-            element={
-              <MyAccount
-                accountInfo={accountInfo}
-                updateAccountInfo={updateAccountInfo}
-                principal={principal}
-              />
-            }
-          />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </div>
+      <AppWithNav />
     </Router>
   );
 }

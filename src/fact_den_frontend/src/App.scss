@@ -113,3 +113,10 @@ html {
     transform: rotate(360deg);
   }
 }
+
+// Add this new class for when AppBar is not present (i.e., signup page)
+.app-content.full-height {
+  min-height: 100vh;
+  margin-top: 0;
+  padding-top: 0;
+}

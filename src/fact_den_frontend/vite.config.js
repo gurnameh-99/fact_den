@@ -1,89 +1,115 @@
-import { fileURLToPath, URL } from 'url';
-import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { fileURLToPath } from 'url';
+import path from 'path';
 import environment from 'vite-plugin-environment';
 import dotenv from 'dotenv';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
+
+// Get the directory name
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Load environment variables
 dotenv.config();
 
-// Simplified configuration with clear environment distinction
-const NETWORK = process.env.DFX_NETWORK || 'local';
-const isProduction = NETWORK === 'ic';
+// Default to 'local' if DFX_NETWORK is not defined
+const dfxNetwork = process.env.DFX_NETWORK || 'local';
 
-// Use the actual canister IDs from our deployment
-const LOCAL_CANISTER_ID = 'bnz7o-iuaaa-aaaaa-qaaaa-cai'; // Backend
-const LOCAL_FRONTEND_CANISTER_ID = 'bkyz2-fmaaa-aaaaa-qaaaq-cai'; // Frontend
-const LOCAL_II_CANISTER_ID = 'bd3sg-teaaa-aaaaa-qaaba-cai'; // Internet Identity
+// Set canister IDs based on the DFX_NETWORK value
+const network = dfxNetwork !== 'ic' ? 'local' : 'ic';
 
-// This is the canister ID that will be used in production (on the IC network)
-// Make sure this is your deployed canister ID
-const PROD_CANISTER_ID = 'ryjl3-tyaaa-aaaaa-aaaba-cai'; 
+// Define static canister IDs as fallback
+const STATIC_CANISTER_IDS = {
+  FACT_DEN_FRONTEND_CANISTER_ID: 'bkyz2-fmaaa-aaaaa-qaaaq-cai',
+  FACT_DEN_BACKEND_CANISTER_ID: 'bnz7o-iuaaa-aaaaa-qaaaa-cai',
+  INTERNET_IDENTITY_CANISTER_ID: 'bd3sg-teaaa-aaaaa-qaaba-cai'
+};
 
-// Choose the correct canister ID based on the environment
-const canisterId = isProduction ? PROD_CANISTER_ID : LOCAL_CANISTER_ID;
+function mapEnv() {
+  try {
+    // Attempt to load canister IDs from local configuration
+    const localCanistersPath = path.resolve(__dirname, '../../.dfx/local/canister_ids.json');
+    const localCanisters = require(localCanistersPath);
+    
+    // Process the canister IDs
+    return Object.entries(localCanisters || {}).reduce((prev, current) => {
+      const [canisterName, canisterDetails] = current;
+      if (canisterDetails && canisterDetails[network]) {
+        prev[canisterName.toUpperCase() + '_CANISTER_ID'] = canisterDetails[network];
+      }
+      return prev;
+    }, {});
+  } catch (error) {
+    console.log('Error loading canister IDs, using static values:', error.message);
+    return STATIC_CANISTER_IDS;
+  }
+}
 
-// Host config - use IC for production, localhost for development
-const host = isProduction ? 'https://ic0.app' : 'http://localhost:4943';
+console.log(`Using ${dfxNetwork === 'ic' ? 'production' : 'development'} configuration:`);
+console.log(`Network: ${network}`);
 
-// Internet Identity URL - use the appropriate one based on environment
-const II_URL = isProduction 
-  ? 'https://identity.ic0.app' 
-  : `http://${LOCAL_II_CANISTER_ID}.localhost:4943`;
+// Determine the Internet Identity URL
+const II_URL = dfxNetwork !== 'ic' 
+  ? `http://${STATIC_CANISTER_IDS.INTERNET_IDENTITY_CANISTER_ID}.localhost:4943`
+  : 'https://identity.ic0.app';
 
-console.log(`Using ${isProduction ? 'production' : 'development'} configuration:`);
-console.log(`Network: ${NETWORK}`);
-console.log(`Canister ID: ${canisterId}`);
-console.log(`Host: ${host}`);
-console.log(`Internet Identity URL: ${II_URL}`);
+// Determine the host
+const HOST = dfxNetwork !== 'ic' ? 'http://localhost:4943' : 'https://ic0.app';
 
 export default defineConfig({
-  build: {
-    emptyOutDir: true,
-  },
-  optimizeDeps: {
-    esbuildOptions: {
-      define: {
-        global: "globalThis",
+  plugins: [
+    react(),
+    environment({
+      DFX_NETWORK: dfxNetwork,
+      PERPLEXITY_API_KEY: process.env.PERPLEXITY_API_KEY,
+      INTERNET_IDENTITY_URL: II_URL,
+      HOST: HOST,
+      ...mapEnv(),
+      defaults: {
+        DFX_NETWORK: 'local',
+        PERPLEXITY_API_KEY: 'pplx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+        INTERNET_IDENTITY_URL: II_URL,
+        HOST: HOST
+      }
+    }),
+    nodePolyfills({
+      // Use polyfills for Node.js built-in modules
+      include: ['buffer', 'process', 'util'],
+      // Whether to polyfill specific globals
+      globals: {
+        Buffer: true,
+        global: true,
+        process: true,
       },
+    }),
+  ],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
     },
+    dedupe: ['@dfinity/agent', '@dfinity/auth-client', '@dfinity/principal'],
   },
   server: {
     proxy: {
       '/api': {
-        target: host,
+        target: 'http://127.0.0.1:4943',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '/api'),
       },
     },
   },
-  plugins: [
-    react(),
-    environment({
-      DFX_NETWORK: NETWORK,
-      CANISTER_ID: canisterId,
-      NODE_ENV: process.env.NODE_ENV || 'development',
-      INTERNET_IDENTITY_URL: II_URL,
-      HOST: host,
-    }),
-  ],
-  resolve: {
-    alias: [
-      {
-        find: "declarations",
-        replacement: fileURLToPath(
-          new URL("../declarations", import.meta.url)
-        ),
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
       },
-    ],
-    dedupe: ['@dfinity/agent', '@dfinity/auth-client', '@dfinity/principal'],
+    },
   },
-  define: {
-    'process.env.DFX_NETWORK': JSON.stringify(NETWORK),
-    'process.env.CANISTER_ID': JSON.stringify(canisterId),
-    'process.env.IS_PRODUCTION': isProduction,
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
-    'process.env.INTERNET_IDENTITY_URL': JSON.stringify(II_URL),
-    'process.env.HOST': JSON.stringify(host),
+  build: {
+    rollupOptions: {
+      external: [],
+    },
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
   },
-});
+}); 
