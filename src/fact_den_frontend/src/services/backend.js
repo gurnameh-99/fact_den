@@ -6,8 +6,8 @@ import { Principal } from "@dfinity/principal";
 
 // Configuration constants
 const isProduction = process.env.DFX_NETWORK === 'ic';
-const canisterId = process.env.CANISTER_ID || 'bnz7o-iuaaa-aaaaa-qaaaa-cai';
-const host = process.env.HOST || 'http://localhost:4943';
+const canisterId = process.env.FACT_DEN_BACKEND_CANISTER_ID || 'bkyz2-fmaaa-aaaaa-qaaaq-cai';
+const host = process.env.IC_HOST || 'http://localhost:4943';
 const identityProviderUrl = process.env.INTERNET_IDENTITY_URL;
 
 // Cache variables

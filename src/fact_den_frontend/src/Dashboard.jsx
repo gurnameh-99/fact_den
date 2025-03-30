@@ -1,5 +1,5 @@
 // src/fact_den_frontend/src/Dashboard.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './Dashboard.scss';
 // Import backend services
 import { getPosts, addPost, addComment, updateVote, getUserAliasFromPrincipal, getUserPrincipal, getUserVote, requestAIVerdict, getAIVerdict } from './services/backend';
@@ -300,10 +300,16 @@ function Dashboard({ searchQuery, showNewPost, onCloseNewPost }) {
   };
 
   // Filter posts based on the search query
-  const filteredPosts = posts && posts.length ? posts.filter(post =>
-    post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    post.content.toLowerCase().includes(searchQuery.toLowerCase())
-  ) : [];
+  const filteredPosts = useMemo(() => {
+    if (!posts || posts.length === 0) return [];
+    if (!searchQuery || searchQuery.trim() === '') return posts;
+    
+    const query = searchQuery.toLowerCase().trim();
+    return posts.filter(post =>
+      (post.title && post.title.toLowerCase().includes(query)) ||
+      (post.content && post.content.toLowerCase().includes(query))
+    );
+  }, [posts, searchQuery]);
 
   // Extract postId from query parameters and set highlighted post
   useEffect(() => {

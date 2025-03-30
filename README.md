@@ -1,6 +1,6 @@
 # Fact Den
 
-![Fact Den Logo](src/fact_den_frontend/assets/logo192.png)
+![Fact Den Logo](src/fact_den_frontend/public/logo192.png)
 
 Fact Den is a decentralized fact-checking platform built on the Internet Computer, enabling users to share information, engage in discussions, and verify content through AI-powered fact-checking.
 

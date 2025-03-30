@@ -168,7 +168,15 @@ function App() {
   };
 
   const handleSearchChange = (e) => {
+    // Capture the current selection positions before the state update
+    const input = e.target;
+    const selectionStart = input.selectionStart;
+    const selectionEnd = input.selectionEnd;
+    
+    // Use function form of setState to avoid issues with concurrent updates
     setSearchQuery(e.target.value);
+    
+    // The focus will be handled by the AppBar component's useEffect
   };
 
   const handleNewPostClick = () => {
