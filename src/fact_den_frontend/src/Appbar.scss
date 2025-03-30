@@ -1,0 +1,99 @@
+// src/fact_den_frontend/src/AppBar.scss
+
+.custom-app-bar {
+    background-color: #667eea; // Your primary color
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    min-height: 80px; // Increased height for a more spacious look
+    z-index: 100;
+  
+    .left-section {
+      display: flex;
+      align-items: center;
+  
+      .brand {
+        text-decoration: none;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #fff;
+        margin-right: 2rem;
+      }
+    }
+  
+    .middle-section {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+  
+      .search-bar {
+        width: 100%;
+        max-width: 500px;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 999px; // Fully rounded corners
+        font-size: 1rem;
+      }
+    }
+  
+    .right-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+  
+      .new-post-btn {
+        padding: 0.5rem 1rem;
+        background-color: #fff;
+        color: #667eea;
+        border: none;
+        border-radius: 999px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.3s;
+  
+        &:hover {
+          background-color: #f0f0f0;
+        }
+      }
+  
+      .account-link {
+        text-decoration: none;
+        font-size: 1rem;
+        color: #fff;
+        padding: 0.5rem;
+  
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+  
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+  
+        span {
+          color: #fff;
+          font-weight: bold;
+          font-size: 0.9rem;
+        }
+  
+        .logout-btn {
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          color: #fff;
+          padding: 0.3rem;
+          display: flex;
+          align-items: center;
+  
+          &:hover {
+            color: #eee;
+          }
+        }
+      }
+    }
+  }
+  
